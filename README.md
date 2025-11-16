@@ -1,2 +1,1 @@
 # Descomplicando-Kubernetes
-# Descomplicando-Kubernetes
