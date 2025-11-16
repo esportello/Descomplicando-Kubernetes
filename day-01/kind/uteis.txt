@@ -1,0 +1,7 @@
+$> kind create cluster --name my-cluster --config <path-do-manifesto>
+
+Neste manifesto e possivel customizar de que forma sera criado o cluster. Ex Quantidade de nos que serao control-plane e workers
+
+Este comando apaga o cluster inteiro
+
+$> kind delete cluster --name my-cluster

@@ -1,0 +1,26 @@
+Comandos uteis
+##############
+
+kubectl run <nome> --image nginx --port 8080 --dry-run=client -o yaml > gera_manifesto_deste_pod.yml
+
+Muito util para criar um template de manifestos de forma rapida
+
+A partir de um POD que esteja ativo, este comando cria um template para a criaçao de um serviço para este POD.
+
+Ex:
+
+$> kubectl get pods
+NAME         READY   STATUS    RESTARTS   AGE
+web-nginx    1/1     Running   0          11s
+
+kubectl expose pod web-nginx --dry-run=client -o yaml > svc-web-nginx.yml
+
+Depois e so criar o serviço
+
+$> kubectl apply -f svc-web-nginx.yml 
+service/web created
+
+$> kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    108m
+web-nginx    ClusterIP   10.96.225.108   <none>        8080/TCP   7s
