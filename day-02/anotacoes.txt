@@ -1,0 +1,17 @@
+Comando para verificar o log especifico de um container quando houver mais de um container em um POD
+
+kubectl logs <nome-do-pod> -c <nome-do-container>
+
+Comando para acessar ou executar um comando em um POD que tenha mais de um container
+
+kubectl exec -it <nome-do-pod> -c <nome-do-container> -- <comando a ser executado dentro do container>
+
+Ex:
+
+Executando um simples comando
+kubectl exec pod-multicontainers -c server-linux01 -- ls -la /tmp
+
+
+Executando um processo (no caso abrindo um terminal) 
+
+kubectl exec -it pod-multicontainers -c server-linux01 -- bash
