@@ -1,0 +1,75 @@
+Este comando cria um manifesto do tipo Deployment basico e sem a necessidade de apagar varias entradas caso tivesse sido feito via direcionamento para um arquivo qualquer yaml do
+comando kubectl get deployment.
+
+kubectl create deployment nginx-deploy --image nginx --namespace ns-teste --dry-run=client -o yaml > deploy-elegante.yml
+
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: apps/v1                     # Versao da API
+kind: Deployment                        # Tipo do recurso que sera criado
+metadata:                   
+  labels:                           
+    app: nginx-deployment               # Label que sera associado ao recurso Deployment
+  name: nginx-deployment                # Nome a ser dado a este recurso
+spec:
+  replicas: 10                          # Quantidade desejada de replicas de PODs que o Deployment devera gerenciar e garantir
+  revisionHistoryLimit: 10              # Quantidade de revisoes anteriores de um Deployment. Caso nao seja declarado, seu valor padrao eh 5.
+  selector:
+    matchLabels:
+      app: nginx-deployment             # Este label eh o identificador dos PODs que este Deployment sera responsavel 
+  strategy:
+    type: RollingUpdate                 # RollingUpdate eh a estrategia padrao, caso nao seja definida.
+    rollingUpdate:                      # Eh aceito valores absolutos e percentuais. Neste exemplo, a leitura devera ser a seguinte:
+      maxSurge: 1                       # Quantidade de PODs a mais que o limite definido na propriedade replicas podera ser criado.
+      maxUnavailable: 2                 # Quantidade de PODs que serao "atualizados" ou melhor indisponibilizados por vez para a criaçao de novos
+  template:                             # Template para a criaçao dos containers deste POD
+    metadata:
+      labels:
+        app: nginx-deployment           # Label que sera associado ao POD
+    spec:
+      containers:
+      - image: nginx:1.15.0             # Imagem a ser utilizada para a criaçao do POD
+        name: nginx                     # Nome do container
+        resources:                      # Restriçao de reserva/limite de recursos para o POD
+          limits:
+            cpu: "0.5"                  # O POD nao conseguira ultrapassar 50% de uso de CPU do node onde esta sendo executado
+            memory: 256Mi               # O POD nao conseguira ultrapassar 250Mi de uso de memoria do node onde esta sendo executado
+          requests:
+            cpu: 0.25                   # Garantia (reserva) de que o POD tera 25% de CPU no node escolhido pelo Scheduler para ser iniciado/executado
+            memory: 128Mi               # Garantia (reserva) de que o POD tera 128Mi de memoria no node escolhido pelo Scheduler para ser iniciado/executado
+
+
+Outra estrategia default do kubernetes, alem da RollingUpdate eh a Recreate. Nao ha opcoes para este tipo, pois ao ser utilizado, todos os PODs sao recriados
+ao mesmo tempo.
+
+No manifesto sua definicao eh a seguinte:
+
+spec:
+  replicas: 10                          # Quantidade desejada de replicas de PODs que o Deployment devera gerenciar e garantir
+  selector:
+    matchLabels:
+      app: nginx-deployment             # Este label eh o identificador dos PODs que este Deployment sera responsavel 
+  strategy:
+    type: Recreate                      # Neste exemplo os 10 PODs (replicas) seriam terminados e novos 10 seriam criados ao mesmo tempo
+
+
+Comandos Uteis
+==============
+
+kubectl rollout status deployment <nome-do-deployment>                      # Verifica o progresso de um rollout ou seu status final
+
+kubectl rollout undo deployment <nome-do-deployment>                        # Executa o rollback para a versao anterior ativa de um Deployment
+
+kubectl rollout history deployment <nome-do-deployment>                     # Lista todas as versoes de um Deployment. Depende do valor do revisionHistoryLimit
+
+kubectl rollout history deployment <nome-do-deployment> --revision=x        # Mostra as configuracoes de uma versao especifica
+
+kubectl rollout undo deployment <nome-do-deployment> --to-revision=y        # Executa o rollback para uma versao especifica de um Deployment
+
+kubectl rollout pause deployment <nome-do-deployment>                       # Pausa novas atualizacoes de um Deployment
+
+kubectl rollout resume deployment <nome-do-deployment>                      # Permite que novas atualizacoes possam ser efetuadas para um Deployment
+
+kubectl rollout restart deployment <nome-do-deployment>                     # Reinicia todos os PODs de um Deployment
