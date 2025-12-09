@@ -1,0 +1,19 @@
+Startup Probe 
+=============
+	→ Verifica se o POD iniciou corretamente
+	→ Executado apenas no início para garantir que o POD conseguiu subir corretamente
+	→ Em casos de falhas, o Kubernetes reinicia o POD
+
+Readiness Probe
+===============
+	→ Verifica se o POD está pronto pra receber tráfego
+	→ Em casos de falhas o POD sai do load balancer, não receberá mais tráfego, mas não é reiniciado
+
+Liveness Probe
+==============
+	→ Verifica se o POD continua saudável
+	→ Em casos de falhas, o Kubernetes reinicia o POD
+
+Readiness Probe﻿ e Liveness Probe
+================================
+	→ Ficam rodando em loop, fazendo chamadas em seus respectivos "paths" depois que o POD está no ar
