@@ -1,0 +1,5 @@
+Criar 3 Deployments com qualquer imagem utilizando:
+
+	- limites de recursos
+	- estratégias de deployments
+	- probes

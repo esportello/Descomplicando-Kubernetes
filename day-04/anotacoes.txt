@@ -1,0 +1,119 @@
+REPLICASETS
+###########
+
+São responsáveis por garantir que estejam em execução a quantidade de PODs declarados em manifesto.
+
+Ao criar um Deployment, um ReplicaSet será criado automaticamente.
+
+Para atender uma demanda qualquer, a recomendação é realizar o atendimento desta demanda através da criação de um Deployment e não, diretamente, de um ReplicaSet. O motivo é que através do Deployment, é possível realizar gerenciamento de versões, e com isso realizar rollbacks de versões de forma rápida e confiável. Além, disso, tem a funcionalidade do uso da estratégia do RollingUpdate para mudanças
+de versões, sem causar impacto/indisponibilidade para a solução.
+
+No caso do ReplicaSet, não há como realizar um rollback para uma versão específica, de forma rápida, via comando. E, poderá ser 
+necessário criar/atualizar várias propriedades no manifesto para que se tenha novamente a entrega de uma aplicação/ferramenta em
+uma versão específica/desejada.
+
+Cenário Importante
+==================
+
+Caso a aplicação/ferramenta esteja em execução através de um ReplicaSet (sem Deployment) e caso ocorra uma alteração de apenas da imagem, será possível verificar, após ser aplicado, que os nomes dos PODs deste ReplicaSet não serão alterados. Eles continuam com o mesmo nome e
+conteúdo. Não sofrerão alteração de seu tempo de execução.
+
+Porém, caso ocorra algum delete ou aumento de replicas e um novo POD venha a ser criado, será possível verificar que a sua versão de imagem estará igual a definida no manifesto do ReplicaSet que foi aplicada por último, enquanto os outros PODs mais antigos, continuarão com a versão definida no manifesto do ReplicaSet que os geraram anteriormente.
+
+Comando Útil
+============
+
+Com este comnando é possível alterar a quantidade de replicas de um recurso, no caso deployment, sem precisar editar o manifesto.
+
+kubectl scale deployment <nome-do-deployment> --replicas=n
+
+Obs: Ao apenas alterar a quantidade de replicas de um Deployment o nome do ReplicaSet continuará o mesmo. Porém, caso a alteração seja
+de uma propriedade, como por exemplo, a versão da imagem, ao ser aplicado o Deployment, será criado um novo ReplicaSet e o anterior
+será esvaziado, mas mantido no ambiente para caso seja necessário realizar um rollback.
+
+DAEMONSETS
+##########
+
+Garante ao menos uma replica em execução em cada node do cluster.
+
+Ex. DaemonSet de uma ferramenta de observabilidade (Datadog/Node Exporter do Prometheus)
+    DaemonSet de uma ferramenta de segurança
+    DaemonSet de uma solução de proxy (weave net, calico, flannel)
+    
+Caso o cluster tenha 20 nodes, utilizando os exemplos acima, serão, no total, 20 replicas da ferramenta de observabilidade, mais 20 
+replicas da ferramenta de segurança e mais 20 replicas da solução de proxy. Ou seja, uma replica de cada ferramenta em execução por 
+nó do cluster. 
+
+Obs: O DaemonSet só é possível ser criado via manifesto. Não há como criá-lo por linha de comando.
+
+
+PROBES
+######
+
+É uma forma de "monitorar" a saúde dos containers de um POD, de assegurar se cada container está funcional ou não.
+Portanto, se um POD tiver mais de um container, cada container deverá ter suas configurações de probes.
+
+Existem 3 tipos de Probes:
+
+- livenessProbe		==>  Valida de tempos em tempos se o container está funcional. Caso não esteja, o POD é reiniciado.
+		                 As validações podem ser:
+			                Se a port x está aberta - parâmetro tcpSocket
+			                Se o endpoint está Ok - parâmetro httpGet
+		                    Se a execução de comando(s) foi com sucesso - parâmetro command			
+					
+			Exemplos
+			++++++++					
+			
+			livenessProbe: # Tipo da Probe
+          	  tcpSocket: # Forma que a probe irá "monitorar" o container. Neste caso através do protocolo TCP
+                port: 80 # A porta TCP que a probe utilizará para se conectar ao container
+              initialDelaySeconds: 10 # Quantos segundos a probe irá esperar para executar a primeira verificação
+          	  periodSeconds: 10 # Intervalo de segundos que a probe executará as verificações
+          	  timeoutSeconds: 5 # Quantos segundos a probe aguardará para considerar que a verificação falhou
+          	  failureThreshold: 3 # Quantidade de falhas consecutivas que a probe aceitará antes de reiniciar o container
+          	  successThreshold: 1 # Para este tipo de probe esté é o Único valor permitido. Não funcionará se o valor 
+          				            # for maior que 1. Considera o container OK, após um único sucesso da probe. 
+          		
+            ###########################################################################################################################
+          		
+          	livenessProbe: # Tipo da Probe
+          	  httpGet: # Forma que a probe irá "monitorar" o container. Neste caso através do protocolo HTTP
+                path: /endpoint-qualquer # Qual o endpoint do container que a probe utilizará para se conectar ao container
+                port: 80 # A porta TCP que a probe utilizará para se conectar ao container
+              initialDelaySeconds: 10 # Quantos segundos a probe irá esperar para executar a primeira verificação
+          	  periodSeconds: 10 # Intervalo de segundos que a probe executará as verificações
+          	  timeoutSeconds: 5 # Quantos segundos a probe aguardará para considerar que a verificação falhou
+          	  failureThreshold: 3 # Quantidade de falhas consecutivas que a probe aceitará antes de reiniciar o container
+          	  successThreshold: 1 # Para este tipo de probe esté é o Único valor permitido. Não funcionará se o valor 
+          				          # for maior que 1. Considera o container OK, após um único sucesso da probe.
+          		
+          	###########################################################################################################################
+          		
+          	livenessProbe: # Tipo da Probe
+          	  exec: # Forma que a probe irá "monitorar" o container. Neste caso através da execução de comando(s)
+          	    command: Lista de comando(s) que a probe irá executar dentro do container
+                - cat # Primeiro comando
+                - /tmp/file.txt # Segundo comando. É considerado falha quando o output da execução do comando for igual a 1
+              initialDelaySeconds: 10 # Quantos segundos a probe irá esperar para executar a primeira verificação
+          	  periodSeconds: 10 # Intervalo de segundos que a probe executará as verificações
+          	  timeoutSeconds: 5 # Quantos segundos a probe aguardará para considerar que a verificação falhou
+          	  failureThreshold: 3 # Quantidade de falhas consecutivas que a probe aceitará antes de reiniciar o container
+          	  successThreshold: 1 # Para este tipo de probe esté é o Único valor permitido. Não funcionará se o valor 
+          				          # for maior que 1. Considera o container OK, após um único sucesso da probe.
+                                
+            ###########################################################################################################################
+          		
+- readinessProbe	==>  Valida de tempos em tempos se o container está funcional e permite que o POD receba requisições externas. 
+        			     Caso não esteja, o POD não é reiniciado, mas sim retirado do load balancer para não receber mais requisições.
+		                 A única diferença é que para este tipo de probe, o valor do successThrehold pode ser maior que 1.
+			
+            ###########################################################################################################################
+
+- startupProbe		==>  Executa uma única vez para validar se todos os containers estão saudáveis e caso positivo, determina que o
+			             POD está Ok. Em caso de falha na inicialização de um container, o POD será reiniciado.
+			             
+                         Como se trata de uma única execução, não é necessário configurar os parâmetros abaixo:
+			     	        
+                            periodSeconds
+                            failureThrehold
+                            successThreshold
