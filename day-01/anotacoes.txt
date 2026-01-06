@@ -1,3 +1,69 @@
+Cluster kubernetes
+##################
+
+Control Plane --> Responsavel por gerenciar o Cluster
+Workers --------> Responsavel por executar os PODS
+
+Exemplo de alguns recursos que o Control Plane gerecia no cluster: namespaces, deployments, services, configmaps, 
+secrets, etc...
+
+Arquitetura e Componentes kubernetes
+####################################
+
+etcd
+++++
+
+Desempenha um papel crucial na manutençao da estabilidade e confiabilidade do cluster. Ele armazena as informaçoes 
+de configuração de todos os componentes do control plane, incluindo os detalhes dos serviços, pods e outros recursos 
+do cluster. Graças ao seu design distribuído, o etcd e capaz de tolerar falhas e garantir a continuidade dos dados, 
+mesmo em caso de falha de um ou mais nós. Alem disso, ele suporta a comunicaçao segura entre os componentes do cluster, 
+usando criptografia TLS para proteger os dados.
+
+scheduler
++++++++++
+
+Responsavel por decidir em qual no os pods serao executados, levando em consideraçao os requisitos e os recursos 
+disponiveis. O scheduler também monitora constantemente a situaçao do cluster e, se necessario, ajusta a distribuiçao 
+dos pods para garantir a melhor utilizaçao dos recursos e manter a harmonia entre os componentes.
+
+controller-manager
+++++++++++++++++++
+
+Responsavel por gerenciar os diferentes controladores que regulam o estado do cluster e mantem tudo funcionando. Ele 
+monitora constantemente o estado atual dos recursos e compara-os com o estado desejado, fazendo ajustes conforme 
+necessario.
+
+api-server
+++++++++++
+
+E o componente central que expoe a API do Kubernetes, permitindo que outros componentes do control plane, como o 
+controller-manager e o scheduler, bem como ferramentas externas, se comuniquem e interajam com o cluster. O api-server 
+e a principal interface de comunicaçao do Kubernetes, autenticando e autorizando solicitaçoes, processando-as e fornecendo 
+as respostas apropriadas. Ele garante que as informaçoes sejam compartilhadas e acessadas de forma segura e eficiente, 
+possibilitando uma colaboraçao harmoniosa entre todos os componentes do cluster.
+
+kubelet
++++++++
+
+E o agente que funciona em cada node do cluster, garantindo que os containers estejam funcionando conforme o esperado dentro 
+dos pods. Ele assume o controle de cada no, garantindo que os containers estejam sendo executados conforme as instruçoes 
+recebidas do control plane. Ele monitora constantemente o estado atual dos pods e compara-os com o estado desejado. Caso haja 
+alguma divergencia, o kubelet faz os ajustes necessarios para que os containers sigam funcionando perfeitamente.
+
+kube-proxy
+++++++++++
+
+Responsável por fazer ser possivel que os pods e os services se comuniquem entre si e com o mundo externo. Ele observa o control 
+plane para identificar mudanças na configuraçao dos serviços e, em seguida, atualiza as regras de encaminhamento de trafego para 
+garantir que tudo continue fluindo conforme o esperado.
+
+IMPORTANTE
+##########
+
+Destes componentes, apenas o kubelet e o kube-proxy podem e sao executados em nodes do tipo workers, ou seja, por exemplo, api-server 
+e scheduler nao sao executados em nodes do tipo workers apenas em nodes do tipo control-plane.
+
+
 Comandos uteis
 ##############
 

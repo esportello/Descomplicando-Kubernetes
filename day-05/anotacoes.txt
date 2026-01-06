@@ -1,0 +1,181 @@
+Formas de instalar um Cluster Kubernetes
+########################################
+
+Kubeadm
++++++++
+
+E uma ferramenta para criar e gerenciar um cluster Kubernetes em varios nos. Ele automatiza muitas das tarefas 
+de configuraçao do cluster, incluindo a instalaçao do control-plane e dos workers. E altamente configuravel e 
+pode ser usado para criar clusters personalizados.
+
+Kubespray
++++++++++
+
+E uma ferramenta que usa o Ansible para implantar e gerenciar um cluster Kubernetes em varios nos. Ele oferece 
+muitas opçoes para personalizar a instalaçao do cluster, incluindo a escolha do provedor de rede, o numero de 
+replicas do control-plane, o tipo de armazenamento e muito mais. E uma boa opçao para implantar um cluster em 
+varios ambientes, incluindo nuvens publicas e privadas.
+
+Cloud Providers
++++++++++++++++
+
+Muitos provedores de nuvem, como AWS, GCPl e Azure, oferecem opçoes para implantar um cluster Kubernetes em sua 
+infraestrutura. Eles geralmente fornecem modelos predefinidos que podem ser usados para implantar um cluster com 
+apenas alguns cliques. Alguns provedores de nuvem tambem oferecem serviços gerenciados de Kubernetes que lidam com 
+toda a configuraçao e gerenciamento do cluster.
+
+Kubernetes gerenciados
+++++++++++++++++++++++
+
+Sao serviços gerenciados oferecidos por alguns provedores de nuvem, como Amazon EKS, o GKE do Google Cloud e o AKS, 
+da Azure. Eles oferecem um cluster Kubernetes gerenciado onde você so precisa se preocupar em implantar e gerenciar 
+seus aplicativos. Esses serviços lidam com a configuraçao, atualizaçao e manutençao do cluster para voce. Nesse caso, 
+voce nao tem que gerenciar o control-plane do cluster, pois ele e gerenciado pelo provedor de nuvem.
+
+Kops
+++++
+
+E uma ferramenta para implantar e gerenciar clusters Kubernetes na nuvem. Ele foi projetado especificamente para 
+implantaçao em nuvens publicas como AWS, GCP e Azure. Kops permite criar, atualizar e gerenciar clusters Kubernetes na 
+nuvem. Algumas das principais vantagens de seu uso sao: personalizaçao, escalabilidade e segurança. No entanto, o uso 
+do Kops pode ser mais complexo do que outras opçoes de instalação do Kubernetes, especialmente se voce nao estiver 
+familiarizado com a nuvem em que esta implantando.
+
+Minikube e Kind
++++++++++++++++
+
+Sao ferramentas que permitem criar um cluster Kubernetes localmente, em um unico no. Sao uteis para testar e aprender 
+sobre o Kubernetes, pois voce pode criar um cluster em poucos minutos e começar a implantar aplicativos imediatamente. 
+Tambem sao uteis para desenvolvedores que precisam testar suas aplicaçoes em um ambiente Kubernetes sem precisar 
+configurar um cluster em um ambiente de produçao.
+
+
+Requisitos
+##########
+
+    Linux
+    2 GB ou mais de RAM por máquina
+    2 CPUs ou mais
+    Conexao de rede entre todos os nodes no cluster (pode ser via rede publica ou privada)
+    Portas necessarias:
+
+        TCP 6443
+        --------
+        Porta padra usada pelo Kubernetes API Server para se comunicar com os componentes do cluster. E a principal porta 
+        usada para gerenciar o cluster. Deve estar sempre aberta para que o cluster funcione.
+
+        TCP 10250-10255
+        ---------------
+        Sao usadas pelo kubelet para se comunicar com o control-plane do Kubernetes. A porta 10250 e usada para comunicaçao de 
+        leitura/gravaçao e a porta 10255 e usada apenas para comunicaçao de leitura.
+
+        TCP 30000-32767
+        ---------------
+        Sao usadas para serviços NodePort que precisam ser acessiveis fora do cluster. O Kubernetes aloca uma porta aleatoria 
+        dentro desse intervalo para cada serviço NodePort e redireciona o trafego para o pod correspondente.
+
+        TCP 2379-2380
+        -------------
+        Sao usadas pelo etcd para comunicaçao de leitura/gravaçao e a porta 2380 e usada apenas para comunicaçao de eleiçao.
+
+
+IMPORTANTE
+##########
+
+Apos a instalacao do control-plane, para que seu usuario tenha privilegios para executar comandos no cluster e necessario
+copiar o arquivo /etc/kubernetes/admin.conf para a pasta home do seu usuario. No final da criacao do cluster estes comandos
+sao mostrados apos a execucao do comando de inicializacao/criacao do control-plane pelo kubeadm.
+
+Ex: 
+#> sudo kubeadm init --pod-network-cidr=10.0.0.0/16 --apiserver-advertise-address=<ip da placa de rede principal do seu servidor/maquina>
+
+O parametro pod-network-cidr usado neste exemplo fara com que os recursos dentro do K8s (ex. PODs) tenham ips desta rede
+atribuido a eles e se comunicarao entre eles atraves desta rede.
+
+#> mkdir -p $HOME/.kube
+#> sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+#> sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+No diretorio /etc/kubernetes/pki estao todos os certificados utilizados pelo cluster kubernetes.
+
+Ex:
+
+Certificado do cluster
+        certificate-authority-data  ==> ca.crt
+
+Certificados publico e privado e que foram copiados para o arquivo $HOME/.kube/config dos usuarios que poderao administrar o cluster
+
+        client-certificate-data     ==> apiserver-kubelet-client.crt
+        client-key-data             ==> apiserver-kubelet-client.key
+
+
+Outra informaçao super importante que esta contida no arquivo /etc/kubernetes/admin.conf ou $HOME/.kube/config e referente as credenciais 
+de acesso ao cluster. Essas credenciais sao usadas para autenticar o usuario que esta executando o comando kubectl. Essas credenciais sao:
+
+Token de autenticaçao
++++++++++++++++++++++
+
+E um token de acesso que e usado para autenticar o usuario que esta executando o comando kubectl. Esse token e gerado automaticamente 
+quando o cluster e inicializado.
+
+certificate-authority-data
+++++++++++++++++++++++++++
+
+Este campo contem a representação em base64 do certificado da autoridade de certificaçao (CA) do cluster. A CA e responsavel por assinar e 
+emitir certificados para o cluster. O certificado da CA e usado para verificar a autenticidade dos certificados apresentados pelo servidor 
+de API e pelos clientes, garantindo que a comunicaçao entre eles seja segura e confiavel.
+
+client-certificate-data
++++++++++++++++++++++++
+
+Este campo contem a representaçao em base64 do certificado do cliente. O certificado do cliente e usado para autenticar o usuario ao se 
+comunicar com o servidor de API do Kubernetes. O certificado e assinado pela autoridade de certificação (CA) do cluster e inclui informaçoes 
+sobre o usuário e sua chave publica.
+
+client-key-data
++++++++++++++++
+
+Este campo contem a representaçao em base64 da chave privada do cliente. A chave privada e usada para assinar as solicitações enviadas ao 
+servidor de API do Kubernetes, permitindo que o servidor verifique a autenticidade da solicitaçao. A chave privada deve ser mantida em sigilo 
+e nao compartilhada com outras pessoas ou sistemas.
+
+CNI - Cloud Network interface
+#############################
+
+CNI é uma especificaçao e conjunto de bibliotecas para a configuraçao de interfaces de rede em containers. A CNI permite que diferentes 
+soluçoes de rede sejam integradas ao Kubernetes, facilitando a comunicaçao entre os PODs (grupos de containers) e serviços.
+
+Entre os plugins de rede mais utilizados no Kubernetes, temos:
+
+Calico
+++++++
+
+E um dos plugins de rede mais populares e amplamente utilizados no Kubernetes. Ele fornece segurança de rede e permite a implementaçao de 
+politicas de rede. O Calico utiliza o BGP (Border Gateway Protocol) para rotear trafego entre os nos do cluster, proporcionando um desempenho 
+eficiente e escalavel.
+
+Flannel
++++++++
+
+E um plugin de rede simples e facil de configurar, projetado para o Kubernetes. Ele cria uma rede overlay que permite que os PODs se comuniquem 
+entre si, mesmo em diferentes nos do cluster. O Flannel atribui um intervalo de IPs a cada no e utiliza um protocolo simples para rotear o trafego 
+entre os nos.
+
+Weave Net
++++++++++
+
+E outra soluçao popular de rede para Kubernetes. Ele fornece uma rede overlay que permite a comunicaçao entre os PODs em diferentes nos. Alem disso, 
+o Weave suporta criptografia de rede e gerenciamento de politicas de rede. Ele tambem pode ser integrado com outras soluçoes, como o Calico, para 
+fornecer recursos adicionais de segurança e politicas de rede.
+
+Cilium
+++++++
+
+E um plugin de rede focado em segurança e desempenho. Ele utiliza o BPF (Berkeley Packet Filter) para fornecer politicas de rede e segurança de alto 
+desempenho. O Cilium tambem oferece recursos avançados, como balanceamento de carga, monitoramento e soluçao de problemas de rede.
+
+Kube-router
++++++++++++
+
+E uma soluçao de rede leve para Kubernetes. Ele utiliza o BGP e IPVS (IP Virtual Server) para rotear o trafego entre os nos do cluster, proporcionando 
+um desempenho eficiente e escalavel. Kube-router tambem suporta politicas de rede e permite a implementaçao de firewalls entre os PODs.

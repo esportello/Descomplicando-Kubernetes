@@ -5,8 +5,10 @@ São responsáveis por garantir que estejam em execução a quantidade de PODs d
 
 Ao criar um Deployment, um ReplicaSet será criado automaticamente.
 
-Para atender uma demanda qualquer, a recomendação é realizar o atendimento desta demanda através da criação de um Deployment e não, diretamente, de um ReplicaSet. O motivo é que através do Deployment, é possível realizar gerenciamento de versões, e com isso realizar rollbacks de versões de forma rápida e confiável. Além, disso, tem a funcionalidade do uso da estratégia do RollingUpdate para mudanças
-de versões, sem causar impacto/indisponibilidade para a solução.
+Para atender uma demanda qualquer, a recomendação é realizar o atendimento desta demanda através da criação de um Deployment e 
+não, diretamente, de um ReplicaSet. O motivo é que através do Deployment, é possível realizar gerenciamento de versões, e com 
+isso realizar rollbacks de versões de forma rápida e confiável. Além disso, tem a funcionalidade do uso da estratégia do 
+RollingUpdate para mudanças de versões, sem causar impacto/indisponibilidade para a solução.
 
 No caso do ReplicaSet, não há como realizar um rollback para uma versão específica, de forma rápida, via comando. E, poderá ser 
 necessário criar/atualizar várias propriedades no manifesto para que se tenha novamente a entrega de uma aplicação/ferramenta em
@@ -15,10 +17,13 @@ uma versão específica/desejada.
 Cenário Importante
 ==================
 
-Caso a aplicação/ferramenta esteja em execução através de um ReplicaSet (sem Deployment) e caso ocorra uma alteração de apenas da imagem, será possível verificar, após ser aplicado, que os nomes dos PODs deste ReplicaSet não serão alterados. Eles continuam com o mesmo nome e
-conteúdo. Não sofrerão alteração de seu tempo de execução.
+Caso a aplicação/ferramenta esteja em execução através de um ReplicaSet (sem Deployment) e caso ocorra uma alteração apenas na 
+imagem, será possível verificar, após ser aplicado, que os nomes dos PODs deste ReplicaSet não serão alterados. Eles continuam 
+com o mesmo nome e conteúdo. Não sofrerão alteração de seu tempo de execução.
 
-Porém, caso ocorra algum delete ou aumento de replicas e um novo POD venha a ser criado, será possível verificar que a sua versão de imagem estará igual a definida no manifesto do ReplicaSet que foi aplicada por último, enquanto os outros PODs mais antigos, continuarão com a versão definida no manifesto do ReplicaSet que os geraram anteriormente.
+Porém, caso ocorra algum delete ou aumento de replicas e um novo POD venha a ser criado, será possível verificar que a sua versão 
+de imagem estará igual a definida no manifesto do ReplicaSet que foi aplicada por último, enquanto os outros PODs mais antigos, 
+continuarão com a versão definida no manifesto do ReplicaSet que os geraram anteriormente.
 
 Comando Útil
 ============
@@ -27,9 +32,9 @@ Com este comnando é possível alterar a quantidade de replicas de um recurso, n
 
 kubectl scale deployment <nome-do-deployment> --replicas=n
 
-Obs: Ao apenas alterar a quantidade de replicas de um Deployment o nome do ReplicaSet continuará o mesmo. Porém, caso a alteração seja
-de uma propriedade, como por exemplo, a versão da imagem, ao ser aplicado o Deployment, será criado um novo ReplicaSet e o anterior
-será esvaziado, mas mantido no ambiente para caso seja necessário realizar um rollback.
+Obs: Ao apenas alterar a quantidade de replicas de um Deployment o nome do ReplicaSet continuará o mesmo. Porém, caso a alteração 
+seja de uma propriedade, como por exemplo, a versão da imagem, ao ser aplicado o Deployment, será criado um novo ReplicaSet e o 
+anterior será esvaziado, mas mantido no ambiente para caso seja necessário realizar um rollback.
 
 DAEMONSETS
 ##########
@@ -57,7 +62,7 @@ Existem 3 tipos de Probes:
 
 - livenessProbe		==>  Valida de tempos em tempos se o container está funcional. Caso não esteja, o POD é reiniciado.
 		                 As validações podem ser:
-			                Se a port x está aberta - parâmetro tcpSocket
+			                Se a porta x está aberta - parâmetro tcpSocket
 			                Se o endpoint está Ok - parâmetro httpGet
 		                    Se a execução de comando(s) foi com sucesso - parâmetro command			
 					
@@ -72,7 +77,7 @@ Existem 3 tipos de Probes:
           	  timeoutSeconds: 5 # Quantos segundos a probe aguardará para considerar que a verificação falhou
           	  failureThreshold: 3 # Quantidade de falhas consecutivas que a probe aceitará antes de reiniciar o container
           	  successThreshold: 1 # Para este tipo de probe esté é o Único valor permitido. Não funcionará se o valor 
-          				            # for maior que 1. Considera o container OK, após um único sucesso da probe. 
+          				          # for maior que 1. Considera o container OK, após um único sucesso da probe. 
           		
             ###########################################################################################################################
           		

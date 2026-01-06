@@ -14,6 +14,6 @@ Liveness Probe
 	→ Verifica se o POD continua saudável
 	→ Em casos de falhas, o Kubernetes reinicia o POD
 
-Readiness Probe﻿ e Liveness Probe
-================================
+Readiness e Liveness Probe
+==========================
 	→ Ficam rodando em loop, fazendo chamadas em seus respectivos "paths" depois que o POD está no ar
