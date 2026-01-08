@@ -1,0 +1,2 @@
+Criar um Deployment do Nginx, que possua um volume montado no /usr/share/nginx/html. 
+Fique a vontade em utilizar diferentes tipos de provisionadores e/ou diferentes tipos de PV. 

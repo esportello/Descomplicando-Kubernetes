@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    tipo: lento
+  name: pv-local
+spec:
+  capacity:
+    storage: 10Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/data
+  storageClassName: my-storageclass
