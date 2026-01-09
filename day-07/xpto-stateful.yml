@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: appxpto
+spec:
+  serviceName: "xpto-headless"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: appxpto
+  template:
+    metadata:
+      labels: 
+        app: appxpto
+    spec:
+      containers:
+        - name: xpto
+          image: nginx
+          ports:
+          - containerPort: 80
+            name: http
+          volumeMounts:
+          - name: xpto-dir
+            mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: xpto-dir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Mi

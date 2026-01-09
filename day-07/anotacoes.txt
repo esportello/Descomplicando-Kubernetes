@@ -1,0 +1,246 @@
+STATEFULSET
+###########
+
+Recurso muito utilizado quando a solucao necessita garantir que nao haja alteracao de alguns dados da infraestrutura. 
+Por exemplo, nomes de hosts, ips, manter o mesmo PV etc...
+
+Outro caracteristica importante e que e possivel definir ordens para execuçao de Deployments, RollingUpdates e Rollbacks.
+
+Os StatefulSets sao uteis para aplicaçoes que necessitam de um ou mais dos seguintes:
+
+    Identidade de rede estavel e unica
+    Armazenamento persistente estavel
+    Ordem de deployment e scaling garantida
+    Ordem de rolling updates e rollbacks garantida
+
+Diferente dos Deployments e Replicasets que sao considerados stateless (sem estado), o StatefulSet e utilizado quando e necessario
+mais garantias sobre o deployment e scaling, ou seja, quando houver necessidade de manter estaveis, nomes e endereços ips dos PODs 
+ao longo do tempo.
+
+Algumas aplicaçoes que se encaixam nesses requisitos são:
+    bancos de dados
+    sistemas de filas (mensageria) 
+    aplicativos que necessitam de persistencia de dados ou identidade de rede estavel
+
+
+Os StatefulSets funcionam criando uma serie de Pods replicados. Cada replica e uma instancia da mesma aplicaçao que e criada a partir
+do mesmo spec, mas pode ser diferenciada por seu indice e hostname.
+
+Ao contrario dos Deployments e Replicasets, onde as replicas são intercambiaveis, cada POD em um StatefulSet tem um indice persistente 
+e um hostname que se vinculam a sua identidade.
+
+Por exemplo, se um StatefulSet tiver um nome appxpto e um spec com tres replicas, serao criados tres PODs: appxpto-0, appxpto-1 
+e appxpto-2. A ordem dos indices e garantida. O POD appxpto-1 nao sera iniciado ate que o POD appxpto-0 esteja disponivel e pronto.
+A mesma garantia de ordem e aplicada ao scaling, updates e rollbacks.
+
+Um aspecto chave dos StatefulSets e a integraçao com os PVs. Quando um POD e recriado, ele se reconecta ao mesmo PV, garantindo a 
+persistencia dos dados entre as recriaçoes dos PODs.
+
+Por padrao, o Kubernetes cria um PersistentVolume para cada POD em um StatefulSet, que e entao vinculado a esse POD para a vida util 
+do StatefulSet.
+
+OBS: A unica forma de criar este recurso e atraves da criacao de seu manifesto.
+
+Manifesto exemplo
++++++++++++++++++
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: appxpto
+spec:
+  serviceName: "xpto-headless"       # Este e o nome do servico headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: appxpto
+  template:
+    metadata:
+      labels: 
+        app: appxpto
+    spec:
+      containers:
+        - name: xpto
+          image: nginx
+          ports:
+          - containerPort: 80
+            name: http
+          volumeMounts:
+          - name: xpto-dir
+            mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:     # Este template, cria um volume para cada POD
+  - metadata:
+      name: xpto-dir        # Nome do volume, assim teremos o volume xpto-dir-appxpto-0, xpto-dir-appxpto-1 e xpto-dir-appxpto-2
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Mi
+
+Headless
+++++++++
+
+E um tipo especial de serviço que nao tem um IP proprio. Em vez disso, ele retorna diretamente os IPs dos PODs que estao associados 
+a ele. Os StatefulSets e os Headless Services geralmente trabalham juntos no gerenciamento de aplicaçoes stateful. O Headless Service e 
+responsavel por permitir a comunicaçao de rede entre os PODs, controlando o domínio DNS dos PODs criados em um StatefulSet.
+Cada POD tera um hostname neste formato: <pod-name>.<service-name>.<namespace>.svc.cluster.local. 
+Isso permite que cada POD seja alcançado individualmente.
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: xpto-headless
+  labels:
+    app: appxpto
+spec:
+  ports:
+  - port: 80
+    name: http
+  clusterIP: None   # Quando se define com o valor None, o K8s entende que trata-se de um headless service
+  selector:
+    app: appxpto
+
+
+SERVICES
+########
+
+Os Services no Kubernetes sao uma abstraçao que define um conjunto logico de PODs e uma politica para acessa-los. Eles permitem 
+que voce exponha um ou mais PODs para serem acessados por outros PODs, independentemente de onde eles estejam em execuçao no cluster.
+Os conjuntos de PODs sao determinados por meio de seletores de rotulo (Label Selectors). Embora, cada POD tenha um endereço IP unico, 
+esses IPs nao sao expostos fora do cluster sem um serviço.
+
+A principal caracteristica dos Services e que eles mantem um endereço IP estavel e uma porta de serviço que permanecem constantes ao 
+longo do tempo, mesmo que os PODs subjacentes sejam substituidos.
+
+Para implementar essa abstraçao, o Kubernetes usa uma outra abstraçao chamada Endpoint. Quando um Service e criado, o Kubernetes tambem 
+cria um objeto Endpoint com o mesmo nome. Esse objeto Endpoint rastreia os IPs e as portas dos PODs que correspondem aos criterios de 
+seleçao do Service.
+
+E possivel criar Services para:
+
+    PODs
+    Deployments
+    ReplicaSets
+    ReplicationControllers
+    Outro Service
+
+Considere criar um Service para outro Service quando:
+
+    Voce quer mudar temporariamente o tipo de serviço de um ClusterIP para um NodePort ou LoadBalancer para fins de troubleshooting ou 
+    manutençao, sem alterar a configuraçao do serviço original. Nesse caso, voce pode criar um novo serviço que expoe o serviço ClusterIP, 
+    realizar suas tarefas e, em seguida, excluir o novo serviço, mantendo a configuraçao original intacta.
+
+    Voce quer expor o mesmo aplicativo em diferentes contextos, com diferentes politicas de acesso. Por exemplo, voce pode ter um serviço 
+    ClusterIP para comunicaçao interna entre microserviços, um serviço NodePort para acesso a partir da rede interna de sua organizaçao, e um 
+    serviço LoadBalancer para acesso a partir da internet. Nesse caso, todos os tres serviços poderiam apontar para o mesmo conjunto de PODs, 
+    mas cada um deles forneceria um caminho de acesso diferente, com diferentes politicas de segurança e controle de acesso.
+
+
+ClusterIP
++++++++++
+
+Este e o serviço padrao ao ser criado, quando nao ha declaracao. Ele expoe o Service em um IP interno no cluster. Este tipo torna o 
+Service acessivel apenas dentro do cluster.
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: v1
+kind: Service # Tipo do objeto, no caso, um Service
+metadata:
+  name: my-service
+spec:
+  selector: # Seleciona os PODs que serao expostos pelo Service
+    app: my-app # Neste caso, os PODs com o label app=my-app
+  ports:
+    - protocol: TCP
+      port: 80 # Porta do Service
+      targetPort: 8080 # Porta dos PODs
+
+
+NodePort
+++++++++
+
+Expoe o Service na mesma porta de cada no selecionado no cluster usando NAT. Torna o Service acessivel de fora do cluster associando uma 
+porta deste range (30000-32767) dos nos para o Service.
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort # Tipo do Service
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 80 # Porta do Service, que sera mapeada para a porta 8080 do POD
+      targetPort: 8080 # Porta dos PODs
+      nodePort: 30080   # Porta do Node, que sera mapeada para a porta 80 do Service
+
+LoadBalancer
+++++++++++++
+
+Cria um balanceador de carga externo no ambiente de nuvem atual (se suportado) e atribui um IP fixo, externo ao cluster, ao Service.
+
+Este tipo de serviço pode ser considerado quando:
+
+    Provedores de nuvem: Seu cluster Kubernetes esta hospedado em um provedor de nuvem que suporta balanceadores de carga, como AWS, GCP, Azure, etc. 
+    Nesse caso, quando um serviço do tipo LoadBalancer e criado, um balanceador de carga e automaticamente provisionado no provedor de nuvem.
+
+    Trafego externo: Voce precisa que sua aplicaçao seja acessivel fora do cluster. O LoadBalancer expoe um IP acessivel externamente que encaminha 
+    o trafego para os PODs do serviço.
+
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+
+ExternalName
+++++++++++++
+
+Mapeia o Service para o conteudo do campo externalName (por exemplo, foo.bar.example.com), retornando um registro CNAME com seu valor.
+
+O tipo de serviço ExternalName e um pouco diferente dos outros tipos de serviço. Ele não expoe um conjunto de PODs, mas sim um nome de host 
+externo. Por exemplo, voce pode ter um serviço que expoe um banco de dados externo, ou um serviço que expoe um serviço de e-mail externo.
+
+Este tipo de serviço pode ser considerado quando:
+
+    Criar um alias para um serviço externo: Suponha que voce tenha um banco de dados hospedado fora do seu cluster Kubernetes, mas voce deseja 
+    que suas aplicaçoes dentro do cluster se refiram a ele pelo mesmo nome, como se estivesse dentro do cluster. Nesse caso, voce pode usar 
+    um ExternalName para criar um alias para o endereço do banco de dados.
+
+    Abstrair serviços dependentes do ambiente: Outro uso comum para ExternalName e quando voce tem ambientes diferentes, como produção e 
+    desenvolvimento, que possuem serviços externos diferentes. Voce pode usar o mesmo nome de serviço em todos os ambientes, mas apontar para 
+    diferentes endereços externos.
+
+Manifesto Exemplo
++++++++++++++++++
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: ExternalName
+  externalName: my-db.xpto.com.br
+
+OBS: O ExternalName nao tem suporte para selectors ou ports, pois ele nao expoe um conjunto de PODs, mas sim um nome de host externo.
