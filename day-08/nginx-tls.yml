@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-with-secret-tls
+  labels:
+    app: nginx-tls
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+    ports:
+    - containerPort: 80
+    - containerPort: 443
+    volumeMounts:
+    - name: nginx-config-volume
+      mountPath: /etc/nginx/nginx.conf
+      subPath: nginx.conf
+    - name: nginx-tls
+      mountPath: /etc/nginx/tls
+  volumes:
+  - name: nginx-config-volume
+    configMap:
+      name: nginx-config
+  - name: nginx-tls
+    secret:
+      secretName: xpto-tls-secret
+      items:
+        - key: tls.crt
+          path: xpto.crt
+        - key: tls.key
+          path: xpto.key
