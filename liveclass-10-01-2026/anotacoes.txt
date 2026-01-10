@@ -1,0 +1,18 @@
+INGRESS CONTROLLER
+##################
+
+Só http e https (outros protocolos e portas ... não)
+roteamento host e path (básico)
+anotações lock-in de vendors ---> muito ruim
+
+Gateway API ==> Evolução do Ingress
+
+Gateway Class ==> É onde se define como será feito o roteamento das requisições e por quem 
+Gateway ==> Gateway propriamente dito (Ex. ALB, NLB)
+Http Routes ==> Host, Headers, Paths, Query Params ... etc...
+
+
+Notebook LM criado na aula
+++++++++++++++++++++++++++
+
+https://notebooklm.google.com/notebook/b9e760f6-c412-4be9-a9a5-d2d2d0383cdf?pli=1
